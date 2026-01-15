@@ -1,37 +1,111 @@
 #include "functions.h"
 
+#include <fstream>
 #include <iostream>
+#include <iterator>
 #include <string>
+
+namespace {
+const char *kContractPath = "contract.txt";
+const char *kOriginalText = "I, Bob, owe Alice $100.";
+const char *kTamperedText = "I, Bob, owe Alice $1000.";
+
+void print_error(const std::string &message) {
+    std::cout << "\033[91m" << message << "\033[0m" << '\n';
+}
+
+bool write_text_file(const std::string &path, const std::string &text) {
+    std::ofstream out(path, std::ios::binary);
+    if (!out) {
+        return false;
+    }
+    out << text;
+    return static_cast<bool>(out);
+}
+
+bool read_file(const std::string &path, std::string &data) {
+    std::ifstream in(path, std::ios::binary);
+    if (!in) {
+        return false;
+    }
+    data.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+    return true;
+}
+
+std::int64_t hash_file(const std::string &path, std::int64_t modulus) {
+    std::string data;
+    if (!read_file(path, data)) {
+        throw std::runtime_error("Unable to read file");
+    }
+    return hash_message(data, modulus);
+}
+
+Signature sign_file(const Curve &curve, const Point &generator, std::int64_t order,
+                    std::int64_t private_key, const std::string &path) {
+    std::int64_t digest = hash_file(path, order);
+    return sign_hash(curve, generator, order, private_key, digest);
+}
+
+bool verify_file(const Curve &curve, const Point &generator, std::int64_t order,
+                 const Point &public_key, const std::string &path, const Signature &signature) {
+    std::int64_t digest = hash_file(path, order);
+    return verify_hash(curve, generator, order, public_key, digest, signature);
+}
+} // namespace
 
 int main() {
     Curve curve{17, 2, 2};
     Point generator{5, 1, false};
     std::int64_t order = 19;
 
-    std::cout << "Toy ECDSA over a small prime field (educational, not secure).\n";
-    std::cout << "Curve: y^2 = x^3 + " << curve.a << "x + " << curve.b << " (mod " << curve.p << ")\n";
-    std::cout << "Generator: (" << generator.x << ", " << generator.y << ") with order " << order << "\n\n";
-
-    std::cout << "Enter a message to sign: ";
-    std::string message;
-    std::getline(std::cin, message);
-
-    if (message.empty()) {
-        std::cout << "Message was empty. Exiting.\n";
-        return 0;
+    std::cout << "[+] Creating contract file." << '\n';
+    if (!write_text_file(kContractPath, kOriginalText)) {
+        print_error("[!] ERROR: Failed to create contract file.");
+        return 1;
     }
+
+    std::cout
+        << "Here we have a standard contract. Alice wants to ensure Bob doesn't change it later. "
+        << "I am acting as the Digital Notary. I am generating a Private/Public key pair." << '\n';
 
     KeyPair keys = generate_keypair(curve, generator, order);
 
-    std::cout << "Private key: " << keys.private_key << "\n";
-    std::cout << "Public key: (" << keys.public_key.x << ", " << keys.public_key.y << ")\n";
+    Signature signature = sign_file(curve, generator, order, keys.private_key, kContractPath);
+    std::cout << "[+] Document signed successfully. Signature: (" << signature.r << ", "
+              << signature.s << ")" << '\n';
+    std::cout
+        << "I have hashed this document and signed it with my Private Key. "
+        << "This signature acts like a wax seal. It is mathematically unique to this exact version "
+        << "of the file." << '\n';
 
-    Signature signature = sign_message(curve, generator, order, keys.private_key, message);
+    std::cout
+        << "Now, let's pretend I am a hacker. I gain access to the file and secretly add a zero "
+        << "to the debt. To the naked eye, it looks like a valid text file." << '\n';
+    if (!write_text_file(kContractPath, kTamperedText)) {
+        print_error("[!] ERROR: Failed to tamper with contract file.");
+        return 1;
+    }
 
-    std::cout << "Signature (r, s): (" << signature.r << ", " << signature.s << ")\n";
+    if (verify_file(curve, generator, order, keys.public_key, kContractPath, signature)) {
+        std::cout << "[+] SUCCESS: Document is authentic." << '\n';
+    } else {
+        print_error("[!] ERROR: INVALID SIGNATURE! FILE TAMPERED.");
+    }
 
-    bool valid = verify_signature(curve, generator, order, keys.public_key, message, signature);
-    std::cout << "Signature verification: " << (valid ? "valid" : "invalid") << "\n";
+    std::cout
+        << "If we revert the change, the math aligns again. "
+        << "This proves that with ECC, you can trust data even if you don't trust the network it "
+        << "traveled on." << '\n';
+    if (!write_text_file(kContractPath, kOriginalText)) {
+        print_error("[!] ERROR: Failed to restore contract file.");
+        return 1;
+    }
+
+    if (verify_file(curve, generator, order, keys.public_key, kContractPath, signature)) {
+        std::cout << "[+] SUCCESS: Document is authentic." << '\n';
+    } else {
+        print_error("[!] ERROR: INVALID SIGNATURE! FILE TAMPERED.");
+    }
 
     return 0;
 }

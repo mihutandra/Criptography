@@ -4,4 +4,3 @@ project(ECDSA)
 set(CMAKE_CXX_STANDARD 17)
 
 add_executable(ECDSA main.cpp functions.cpp)
-add_executable(ECDSA_NotaryDemo notary_demo.cpp functions.cpp)
