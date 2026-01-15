@@ -106,7 +106,11 @@ KeyPair generate_keypair(const Curve &curve, const Point &generator, std::int64_
 Signature sign_message(const Curve &curve, const Point &generator, std::int64_t order,
                        std::int64_t private_key, const std::string &message) {
     std::int64_t hash = hash_message(message, order);
+    return sign_hash(curve, generator, order, private_key, hash);
+}
 
+Signature sign_hash(const Curve &curve, const Point &generator, std::int64_t order,
+                    std::int64_t private_key, std::int64_t hash) {
     while (true) {
         std::int64_t k = random_in_range(1, order - 1);
         Point point = scalar_multiply(curve, generator, k);
@@ -126,11 +130,17 @@ Signature sign_message(const Curve &curve, const Point &generator, std::int64_t 
 bool verify_signature(const Curve &curve, const Point &generator, std::int64_t order,
                       const Point &public_key, const std::string &message,
                       const Signature &signature) {
+    std::int64_t hash = hash_message(message, order);
+    return verify_hash(curve, generator, order, public_key, hash, signature);
+}
+
+bool verify_hash(const Curve &curve, const Point &generator, std::int64_t order,
+                 const Point &public_key, std::int64_t hash,
+                 const Signature &signature) {
     if (signature.r <= 0 || signature.r >= order || signature.s <= 0 || signature.s >= order) {
         return false;
     }
 
-    std::int64_t hash = hash_message(message, order);
     std::int64_t w = mod_inverse(signature.s, order);
     std::int64_t u1 = mod(hash * w, order);
     std::int64_t u2 = mod(signature.r * w, order);

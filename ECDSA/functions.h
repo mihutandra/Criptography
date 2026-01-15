@@ -39,5 +39,10 @@ Signature sign_message(const Curve &curve, const Point &generator, std::int64_t 
 bool verify_signature(const Curve &curve, const Point &generator, std::int64_t order,
                       const Point &public_key, const std::string &message,
                       const Signature &signature);
+Signature sign_hash(const Curve &curve, const Point &generator, std::int64_t order,
+                    std::int64_t private_key, std::int64_t hash);
+bool verify_hash(const Curve &curve, const Point &generator, std::int64_t order,
+                 const Point &public_key, std::int64_t hash,
+                 const Signature &signature);
 
 #endif
