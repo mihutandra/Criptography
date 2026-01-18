@@ -14,6 +14,11 @@ void print_error(const std::string &message) {
     std::cout << "\033[91m" << message << "\033[0m" << '\n';
 }
 
+void print_info(const std::string &message) {
+    std::cout << "\033[36m" << message << "\033[0m" << '\n';
+}
+
+
 bool write_text_file(const std::string &path, const std::string &text) {
     std::ofstream out(path, std::ios::binary);
     if (!out) {
@@ -31,6 +36,13 @@ bool read_file(const std::string &path, std::string &data) {
     data.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
     return true;
 }
+std::string prompt_line(const std::string &message) {
+    std::cout << message;
+    std::string input;
+    std::getline(std::cin, input);
+    return input;
+}
+
 
 std::int64_t hash_file(const std::string &path, std::int64_t modulus) {
     std::string data;
@@ -51,9 +63,8 @@ bool verify_file(const Curve &curve, const Point &generator, std::int64_t order,
     std::int64_t digest = hash_file(path, order);
     return verify_hash(curve, generator, order, public_key, digest, signature);
 }
-} // namespace
 
-int main() {
+int run_demo() {
     Curve curve{17, 2, 2};
     Point generator{5, 1, false};
     std::int64_t order = 19;
@@ -110,4 +121,62 @@ int main() {
     }
 
     return 0;
+}
+
+
+int run_file_verification() {
+    Curve curve{17, 2, 2};
+    Point generator{5, 1, false};
+    std::int64_t order = 19;
+
+    std::string original_path = prompt_line("[?] Enter the path to the original .txt file: ");
+    if (original_path.empty()) {
+        print_error("[!] ERROR: No file path provided.");
+        return 1;
+    }
+
+    std::string original_data;
+    if (!read_file(original_path, original_data)) {
+        print_error("[!] ERROR: Failed to read the original file.");
+        return 1;
+    }
+
+    KeyPair keys = generate_keypair(curve, generator, order);
+    Signature signature = sign_file(curve, generator, order, keys.private_key, original_path);
+    print_info("[+] File signed. Share the signature with the verifier.");
+    std::cout << "[+] Signature: (" << signature.r << ", " << signature.s << ")" << '\n';
+
+    std::string verify_path =
+        prompt_line("[?] Enter the path to the file you want to verify (original or tampered): ");
+    if (verify_path.empty()) {
+        print_error("[!] ERROR: No verification file path provided.");
+        return 1;
+    }
+
+    if (verify_file(curve, generator, order, keys.public_key, verify_path, signature)) {
+        std::cout << "\033[32m" << "[+] SUCCESS: Document is authentic." << '\n';
+    } else {
+        print_error("[!] ERROR: INVALID SIGNATURE! FILE TAMPERED.");
+    }
+
+    return 0;
+}
+} // namespace
+
+int main() {
+    std::cout << "\033[35m" << "ECC Digital Signature Demo" << "\033[0m" << '\n';
+    std::cout << "1) Run built-in demo" << '\n';
+    std::cout << "2) Verify your own .txt file" << '\n';
+    std::string choice = prompt_line("[?] Choose an option (1/2): ");
+
+    if (choice == "1") {
+        return run_demo();
+    }
+
+    if (choice == "2") {
+        return run_file_verification();
+    }
+
+    print_error("[!] ERROR: Invalid option. Please restart and choose 1 or 2.");
+    return 1;
 }
