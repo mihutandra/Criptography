@@ -58,28 +58,30 @@ int main() {
     Point generator{5, 1, false};
     std::int64_t order = 19;
 
+
     std::cout << "[+] Creating contract file...." << '\n' << '\n';
     if (!write_text_file(kContractPath, kOriginalText)) {
         print_error("[!] ERROR: Failed to create contract file.");
         return 1;
     }
 
-    std::cout
+    std::cout << "\033[33m"
         << "Here we have a standard contract. Alice wants to ensure Bob doesn't change it later, so she needs our help. "
-        << "I am acting as the Digital Notary. I am generating a Private/Public key pair." << '\n';
+        << "I am acting as the Digital Notary. I am generating a Private/Public key pair." << '\n'
+        << "\033[33m";
 
     KeyPair keys = generate_keypair(curve, generator, order);
 
     Signature signature = sign_file(curve, generator, order, keys.private_key, kContractPath);
     std::cout << "[+] Document signed successfully. Signature: (" << signature.r << ", "
               << signature.s << ")" << '\n' << '\n';
-    std::cout
+    std::cout << "\033[36m"
         << "I have hashed this document and signed it with my Private Key. "
         << "This signature acts like a wax seal. It is mathematically unique to this exact version "
-        << "of the file." << '\n' << '\n';
+        << "of the file." << '\n' << '\n' << "\033[36m";
 
-    std::cout
-        << "Now, let's pretend I am a hacker. I gain access to the file and secretly add a zero "
+    std::cout << "\033[1m" 
+        << "Now, let's pretend I am a hacker." <<"\033[1m" << " I gain access to the file and secretly add a zero "
         << "to the debt. To the naked eye, it looks like a valid text file." << '\n'  << '\n';
     if (!write_text_file(kContractPath, kTamperedText)) {
         print_error("[!] ERROR: Failed to tamper with contract file.");
@@ -102,7 +104,7 @@ int main() {
     }
 
     if (verify_file(curve, generator, order, keys.public_key, kContractPath, signature)) {
-        std::cout << "[+] SUCCESS: Document is authentic." << '\n'  << '\n';
+        std::cout << "\033[32m" << "[+] SUCCESS: Document is authentic." << '\n'  << '\n' << "\033[31m";
     } else {
         print_error("[!] ERROR: INVALID SIGNATURE! FILE TAMPERED.");
     }

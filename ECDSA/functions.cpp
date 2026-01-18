@@ -4,6 +4,7 @@
 #include <random>
 #include <stdexcept>
 
+
 namespace {
 std::int64_t extended_gcd(std::int64_t a, std::int64_t b, std::int64_t &x, std::int64_t &y) {
     if (b == 0) {
