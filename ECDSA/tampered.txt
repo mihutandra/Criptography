@@ -1,0 +1,26 @@
+This is a file.
+This is the original contract.
+
+
+----------------- here is tampered text -----------------
+
+Lyrics:
+It's my life
+It's now or never
+I ain't gonna live forever
+I just want to live while I'm alive
+My heart is like an open highway
+Like Frankie said
+I did it my way
+I just want to live while I'm alive
+It's my life
+
+I ain't gonna live forever
+I just want to live while I'm alive
+My heart is like an open highway
+Like Frankie said
+I did it my way
+I just want to live while I'm alive
+Some more text.
+
+-- EOF --
