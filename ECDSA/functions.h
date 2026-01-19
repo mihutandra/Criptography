@@ -41,16 +41,16 @@ std::int64_t hash_message(const std::string &message, std::int64_t modulus);    
 Point point_add(const Curve &curve, const Point &p1, const Point &p2);                      // Point addition on elliptic curve
 Point scalar_multiply(const Curve &curve, const Point &point, std::int64_t scalar);         // Scalar multiplication on elliptic curve
 
-KeyPair generate_keypair(const Curve &curve, const Point &generator, std::int64_t order);   // Generate ECDSA key pair
+KeyPair generate_keypair(const Curve &curve, const Point &generator, std::int64_t order);   // Generate ECDSA key pair : Private Key (a secret number d) and Public Key (a point Q).
 Signature sign_message(const Curve &curve, const Point &generator, std::int64_t order,
                        std::int64_t private_key, const std::string &message);               // Sign a message 
 bool verify_signature(const Curve &curve, const Point &generator, std::int64_t order, 
                       const Point &public_key, const std::string &message,
                       const Signature &signature);                                          // Verify a message signature 
 Signature sign_hash(const Curve &curve, const Point &generator, std::int64_t order,
-                    std::int64_t private_key, std::int64_t hash);                           // Sign a hash value
+                    std::int64_t private_key, std::int64_t hash);                           // Sign a hash value : the output of the signing process, the pair (r,s).
 bool verify_hash(const Curve &curve, const Point &generator, std::int64_t order,
                  const Point &public_key, std::int64_t hash,
-                 const Signature &signature);                                               // Verify a hash signature
+                 const Signature &signature);                                               // Verify a hash signature without knowing the original key
 
 #endif
